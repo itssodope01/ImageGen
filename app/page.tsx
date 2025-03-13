@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import React, { useState } from "react";
 import { Send, ImagePlus, Loader2, Trash2 } from "lucide-react";
 
@@ -68,7 +70,7 @@ const ImageGenerator = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="max-w-7xl mx-auto p-8 space-y-8">
       <div className="text-center space-y-3">
         <h1 className="text-4xl font-bold text-[#6366F1]">
           AI Image Generator
@@ -109,10 +111,7 @@ const ImageGenerator = () => {
 
       {isGenerating && (
         <div className="text-center py-8 space-y-4">
-          <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#6366F1] to-purple-600 rounded-full animate-pulse"></div>
-            <Loader2 className="w-24 h-24 animate-spin absolute inset-0 text-white" />
-          </div>
+          <Loader2 className="w-24 h-24 animate-spin mx-auto text-white" />
           <p className="text-gray-300 text-lg">Creating your masterpieces...</p>
           <p className="text-gray-500 text-sm">
             Generating 6 unique variations
@@ -133,30 +132,19 @@ const ImageGenerator = () => {
                 key={image.timestamp}
                 className="bg-[#121212] rounded-xl overflow-hidden transition-transform hover:scale-[1.02] group"
               >
-                <div className="aspect-square relative">
-                  <img
-                    src={image.url}
-                    alt={image.prompt}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => window.open(image.url, "_blank")}
-                        className="p-2 bg-[#1a1a1a] rounded-full hover:bg-[#6366F1] text-white transition-colors"
-                        title="Open in new tab"
-                      >
-                        <ImagePlus className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(image.timestamp)}
-                        className="p-2 bg-[#1a1a1a] rounded-full hover:bg-red-500 text-white transition-colors"
-                        title="Remove image"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
+                <img
+                  src={image.url}
+                  alt={image.prompt}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <button
+                    onClick={() => handleDelete(image.timestamp)}
+                    className="p-2 bg-[#1a1a1a] rounded-full hover:bg-red-500 text-white transition-colors"
+                    title="Remove image"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -171,6 +159,24 @@ const ImageGenerator = () => {
           </p>
         </div>
       )}
+
+      <footer className="absolute bottom-5 left-1/2 transform -translate-x-1/2 text-center mt-10 text-gray-400 py-4 border-t border-gray-800">
+        <p>
+          &copy; {new Date().getFullYear()} Pritam Chakraborty. All rights
+          reserved.
+        </p>
+
+        <p>
+          <a
+            href="https://github.com/itssodope01/ImageGen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#6366F1] hover:underline"
+          >
+            GitHub Repository
+          </a>
+        </p>
+      </footer>
     </div>
   );
 };

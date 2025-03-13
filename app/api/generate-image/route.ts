@@ -5,9 +5,12 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
 
+const TESTING_MODE = true;
+
 export async function POST(request: Request) {
   try {
-    const { prompt } = await request.json();
+    const body = await request.json();
+    const { prompt } = body;
 
     if (!prompt) {
       return NextResponse.json(
@@ -16,11 +19,16 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log("Processing prompt:", prompt);
+
+    const count = TESTING_MODE ? 1 : 6;
+
     const generations = await Promise.all(
-      Array(6)
+      Array(count)
         .fill(null)
-        .map(() =>
-          replicate.run(
+        .map(async () => {
+          console.log("Sending request to Replicate");
+          const result = await replicate.run(
             "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4",
             {
               input: {
@@ -30,18 +38,23 @@ export async function POST(request: Request) {
                 num_inference_steps: 50,
               },
             }
-          )
-        )
+          );
+          console.log("Replicate response:", result);
+          return result;
+        })
     );
 
-    const imageUrls = generations.flat();
+    const imageUrls = generations
+      .flat()
+      .filter((url) => typeof url === "string");
+    console.log("Processed URLs:", imageUrls);
 
     return NextResponse.json({ imageUrls });
   } catch (error) {
     console.error("Generation error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate images" },
-      { status: 500 }
-    );
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to generate images";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
