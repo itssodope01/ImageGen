@@ -5,56 +5,62 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
 
-const TESTING_MODE = true;
-
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { prompt } = body;
+    console.log("API route called");
+
+    let requestBody;
+    try {
+      requestBody = await request.json();
+      console.log("Request body:", requestBody);
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return NextResponse.json(
+        { error: "Invalid request format" },
+        { status: 400 }
+      );
+    }
+
+    const { prompt } = requestBody;
 
     if (!prompt) {
+      console.log("Missing prompt");
       return NextResponse.json(
         { error: "Prompt is required" },
         { status: 400 }
       );
     }
 
-    console.log("Processing prompt:", prompt);
+    console.log(`Generating images for prompt: "${prompt}"`);
 
-    const count = TESTING_MODE ? 1 : 6;
+    try {
+      const singleGeneration = await replicate.run(
+        "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4",
+        {
+          input: {
+            prompt,
+            num_outputs: 1,
+            guidance_scale: 7.5,
+            num_inference_steps: 50,
+          },
+        }
+      );
 
-    const generations = await Promise.all(
-      Array(count)
-        .fill(null)
-        .map(async () => {
-          console.log("Sending request to Replicate");
-          const result = await replicate.run(
-            "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4",
-            {
-              input: {
-                prompt,
-                num_outputs: 1,
-                guidance_scale: 7.5,
-                num_inference_steps: 50,
-              },
-            }
-          );
-          console.log("Replicate response:", result);
-          return result;
-        })
-    );
+      console.log("Generation result:", singleGeneration);
 
-    const imageUrls = generations
-      .flat()
-      .filter((url) => typeof url === "string");
-    console.log("Processed URLs:", imageUrls);
-
-    return NextResponse.json({ imageUrls });
+      return NextResponse.json({ imageUrls: singleGeneration });
+    } catch (replicateError) {
+      console.error("Replicate API error:", replicateError);
+      return NextResponse.json(
+        { error: "Error from image generation API" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error("Generation error:", error);
-
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to generate images";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    console.error("Unhandled error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate images" },
+      { status: 500 }
+    );
   }
 }
